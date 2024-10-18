@@ -1,9 +1,33 @@
+#!/usr/bin/env python3
+
 import sys
 import os
 import subprocess
 from datetime import datetime
+import platform
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+def is_exe():
+    # EXE로 빌드되었는지 확인 (Windows, Linux 공통)
+    return hasattr(sys, 'frozen')
+
+
+def is_dot_slash():
+    return os.path.dirname(os.path.abspath(sys.executable)) == os.getcwd()
+
+
+# BASE_DIR 설정: EXE, 리눅스 ./ 실행 여부에 따라 경로를 설정
+if platform.system() == 'Windows' and is_exe():
+    print("windows")
+    BASE_DIR = os.path.dirname(os.path.abspath(sys.executable))  # EXE일 경우
+elif platform.system() == 'Linux' and is_dot_slash():
+    print("linux ./")
+    BASE_DIR = os.getcwd()  # 리눅스에서 ./로 실행된 경우
+elif is_exe():  # 리눅스에서도 EXE로 실행될 경우 처리
+    print("installer ./")
+    BASE_DIR = os.path.dirname(os.path.abspath(sys.executable))
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 keyword_ctrl = {
     "target_format": [".yaml"],
@@ -11,9 +35,11 @@ keyword_ctrl = {
     "op_exe_cmd": ["enntools init", "enntools conversion"]
 }
 
+
 # keyword_ctrl = {
 #     "target_format": [".md"],
-#     "error_keyword": ["error", "Error", "fail", "Fail", "Fault", "fault", "segmentation", "converter", "dataset_and_model"],
+#     "error_keyword": ["error", "Error", "fail", "Fail", "Fault", "fault", "segmentation", "converter",
+#                       "dataset_and_model"],
 #     "op_exe_cmd": ["ls -l"]
 # }
 
@@ -29,7 +55,7 @@ class op_ctrl_class:
         for root, dirs, files in os.walk(self.base):
 
             if "DATA" in dirs:
-                dirs.remove("DATA")     # continue ?
+                dirs.remove("DATA")  # continue ?
 
             for file in files:
                 if any(file.endswith(ext) for ext in keyword_ctrl["target_format"]):
@@ -41,7 +67,7 @@ class op_ctrl_class:
         for cwd in self.target_dirs:
             output_list = []
             for cmd in keyword_ctrl["op_exe_cmd"]:
-                try:                    
+                try:
                     # Run the command using subprocess.run
                     process = subprocess.run(
                         cmd,

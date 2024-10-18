@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import warnings
 
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -6,6 +8,7 @@ import os
 import sys
 import logging
 import easygui
+import platform
 
 from PyQt5.QtCore import pyqtSignal, QObject
 from PyQt5 import QtWidgets, QtCore, QtGui
@@ -13,12 +16,28 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from source.single_op_verification.single_op_verifier import ctrl_single_op_verify_class
 from source.__init__ import keyword_ctrl, CheckDir, Version
 
-if getattr(sys, 'frozen', False):
-    # PyInstaller로 패키징된 실행 파일일 경우
-    BASE_EXE = os.path.dirname(sys.executable)
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+def is_exe():
+    # EXE로 빌드되었는지 확인 (Windows, Linux 공통)
+    return hasattr(sys, 'frozen')
 
+
+def is_dot_slash():
+    return os.path.dirname(os.path.abspath(sys.executable)) == os.getcwd()
+
+
+# BASE_DIR 설정: EXE, 리눅스 ./ 실행 여부에 따라 경로를 설정
+if platform.system() == 'Windows' and is_exe():
+    # print("windows")
+    BASE_DIR = os.path.dirname(os.path.abspath(sys.executable))  # EXE일 경우
+elif platform.system() == 'Linux' and is_dot_slash():
+    # print("linux ./")
+    BASE_DIR = os.getcwd()  # 리눅스에서 ./로 실행된 경우
+elif is_exe():  # 리눅스에서도 EXE로 실행될 경우 처리
+    # print("installer ./")
+    BASE_DIR = os.path.dirname(os.path.abspath(sys.executable))
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 logging.basicConfig(level=logging.INFO)
 
@@ -122,11 +141,8 @@ class Single_OPs_Verification_MainWindow(QtWidgets.QMainWindow):
 
         self.single_op_ctrl = ctrl_single_op_verify_class(parent=self, grand_parent=self.mainFrame_ui)
 
-        if getattr(sys, 'frozen', False):
-            CheckDir(os.path.join(BASE_EXE, "Result"))
-        else:
-            CheckDir(os.path.join(BASE_DIR, "Result"))
-            
+        CheckDir(os.path.join(BASE_DIR, "Result"))
+
         self.mainFrame_ui.logtextbrowser.hide()
 
     def log_browser_ctrl(self):
@@ -165,11 +181,7 @@ class Single_OPs_Verification_MainWindow(QtWidgets.QMainWindow):
         if self.single_op_ctrl is None:
             return
 
-        if getattr(sys, 'frozen', False):
-            self.single_op_ctrl.save_analyze_result(basedir=os.path.join(BASE_EXE, "Result"))
-        else:
-            self.single_op_ctrl.save_analyze_result(basedir=os.path.join(BASE_DIR, "Result"))
-
+        self.single_op_ctrl.save_analyze_result(basedir=os.path.join(BASE_DIR, "Result"))
 
 
 if __name__ == "__main__":

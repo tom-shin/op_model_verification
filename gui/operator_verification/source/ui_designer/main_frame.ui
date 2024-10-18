@@ -146,6 +146,12 @@
            </item>
            <item row="0" column="0">
             <widget class="QGroupBox" name="groupBox">
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
              <property name="title">
               <string>Keyword Ctrl.</string>
              </property>
@@ -154,6 +160,12 @@
                <layout class="QHBoxLayout" name="horizontalLayout">
                 <item>
                  <widget class="QLabel" name="target_dir">
+                  <property name="font">
+                   <font>
+                    <weight>50</weight>
+                    <bold>false</bold>
+                   </font>
+                  </property>
                   <property name="text">
                    <string>Target Format</string>
                   </property>
@@ -167,10 +179,22 @@
                     <verstretch>0</verstretch>
                    </sizepolicy>
                   </property>
+                  <property name="font">
+                   <font>
+                    <weight>50</weight>
+                    <bold>false</bold>
+                   </font>
+                  </property>
                  </widget>
                 </item>
                 <item>
                  <widget class="QLabel" name="label_4">
+                  <property name="font">
+                   <font>
+                    <weight>50</weight>
+                    <bold>false</bold>
+                   </font>
+                  </property>
                   <property name="text">
                    <string>Command</string>
                   </property>
@@ -184,10 +208,22 @@
                     <verstretch>0</verstretch>
                    </sizepolicy>
                   </property>
+                  <property name="font">
+                   <font>
+                    <weight>50</weight>
+                    <bold>false</bold>
+                   </font>
+                  </property>
                  </widget>
                 </item>
                 <item>
                  <widget class="QLabel" name="label_3">
+                  <property name="font">
+                   <font>
+                    <weight>50</weight>
+                    <bold>false</bold>
+                   </font>
+                  </property>
                   <property name="text">
                    <string>Error</string>
                   </property>
@@ -200,6 +236,12 @@
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <weight>50</weight>
+                    <bold>false</bold>
+                   </font>
                   </property>
                  </widget>
                 </item>

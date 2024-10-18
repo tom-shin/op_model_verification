@@ -14,11 +14,11 @@ from langchain_community.document_loaders import DirectoryLoader, UnstructuredMa
 from langchain_text_splitters import MarkdownHeaderTextSplitter
 from langchain_text_splitters import CharacterTextSplitter
 
-Version = "Single OP Verifier ver.0.1.0"
+Version = "Single OP Verifier ver.0.1.0 (made by tom.shin)"
 
 keyword_ctrl = {
     "target_format": [".yaml"],
-    "error_keyword": ["error", "Error", "fail", "Fail", "Fault", "fault", "segmentation"],
+    "error_keyword": ["error", "Error", "fail", "Fail", "Fault", "fault", "segmentation", "Fault", "ERROR"],
     "op_exe_cmd": ["enntools init", "enntools conversion"]
 }
 
@@ -340,8 +340,8 @@ def get_directory_for_verification(base_dir, user_defined_fmt=None):
     for root, dirs, files in os.walk(base_dir):
 
         if "DATA" in dirs:
-                dirs.remove("DATA")
-                
+            dirs.remove("DATA")
+
         for file in files:
             if user_defined_fmt is None:
                 if any(file.endswith(ext) for ext in keyword_ctrl["target_format"]):
