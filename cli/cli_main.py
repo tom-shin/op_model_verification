@@ -1,6 +1,7 @@
 import os
 import subprocess
 from datetime import datetime
+import select
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -12,8 +13,8 @@ keyword_ctrl = {
 
 # keyword_ctrl = {
 #     "target_format": [".md"],
-#     "error_keyword": ["error", "Error", "fail", "Fail", "Fault", "fault", "segmentation", "converter"],
-#     "op_exe_cmd": ["dir"]
+#     "error_keyword": ["error", "Error", "fail", "Fail", "Fault", "fault", "segmentation", "converter", "dataset_and_model"],
+#     "op_exe_cmd": ["ls -l"]
 # }
 
 
@@ -36,41 +37,31 @@ class op_ctrl_class:
         for cwd in self.target_dirs:
             output_list = []
             for cmd in keyword_ctrl["op_exe_cmd"]:
-                try:
-                    if "init" in cmd:
-                        process = subprocess.run(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                                 text=True, shell=True, check=True)
+                try:                    
+                    # Run the command using subprocess.run
+                    process = subprocess.run(
+                        cmd,
+                        cwd=cwd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        shell=True,
+                        check=True,
+                    )
+
+                    # Print and store output if it exists
+                    if process.stdout:
+                        print(process.stdout.strip())
                         output_list.append(process.stdout.strip())
-                    else:
-                        process = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                                   text=True, shell=True)
-                        while True:
-                            output_line = process.stdout.readline()
-                            if output_line:
-                                output_list.append(output_line.strip())
-                                print(output_line.strip())
 
-                            error_line = process.stderr.readline()
-                            if error_line:
-                                print(f"[Error] cmd {cmd} error")
-                                break
-
-                            if process.poll() is not None:
-                                break
-
-                        remaining_output, errors = process.communicate()
-                        if remaining_output:
-                            output_list.append(remaining_output.strip())
-
-                        if errors:
-                            print(f"[Error] cmd {cmd} process.communicate error")
+                    # Print errors if they exist
+                    if process.stderr:
+                        print(f"[Error] cmd {cmd} error: {process.stderr.strip()}")
 
                 except subprocess.CalledProcessError as e:
                     print(f"[Error] {cmd} Command failed: {str(e)}")
-                    continue
                 except Exception as e:
-                    print(f"[Error] Exception{str(e)}")
-                    continue
+                    print(f"[Error] Exception: {str(e)}")
 
             self.result_format_change_and_save(work_dir=cwd, result_output=output_list)
 

@@ -51,75 +51,39 @@ class OP_Analyze_Thread(QThread):
                 continue
 
             executed_cnt += 1
-            # print(executed_cnt)
+
             cwd = target_widget[0].pathlineEdit.text()
             output_list = []
             error_check_flag = False
 
             cmd_list = [fmt.strip() for fmt in self.grand_parent.command_lineedit.text().split(",")]
-
             for cmd in cmd_list:
                 try:
-                    if "init" in cmd:
-                        process = subprocess.run(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                                 text=True, shell=True, check=True)
+                    process = subprocess.run(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                                             shell=True,check=True,)
+
+                    if process.stdout:
                         output_list.append(process.stdout.strip())
-                        if process.stderr:
-                            error_check_flag = True
-                            self.error_signal.emit(process.stderr.strip(), target_widget)
-                            break
-                    else:
-                        process = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)                        
 
-                        # 실시간으로 표준 출력과 표준 에러를 읽기
-                        while True:
-                            # stdout에서 한 줄씩 읽음
-                            output_line = process.stdout.readline()
-                            if output_line:
-                                output_list.append(output_line.strip())
-                                print(output_line.strip())  # 여기서 실시간 출력 확인 가능
-                            
-                            # stderr에서 에러를 읽음
-                            error_line = process.stderr.readline()
-                            if error_line:
-                                error_check_flag = True
-                                self.error_signal.emit(error_line.strip(), target_widget)
-                                break  # 에러 발생 시 루프를 중단
-
-                            # 프로세스가 종료되었고 더 이상 출력이 없는지 확인
-                            if process.poll() is not None:
-                                break
-
-                        # 남은 출력이나 에러가 있는지 확인
-                        remaining_output, errors = process.communicate()
-                        if remaining_output:
-                            output_list.append(remaining_output.strip())
-
-                        if errors:
-                            error_check_flag = True
-                            self.error_signal.emit(errors.strip(), target_widget)
-
-                        # process = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                        #                            text=True, shell=True)
-
-                        # remaining_output, errors = process.communicate()
-                        # if remaining_output:
-                        #     output_list.append(remaining_output.strip())
-                        # if errors:
-                        #     error_check_flag = True
-                        #     self.error_signal.emit(errors.strip(), target_widget)
-                        #     break
+                    if process.stderr:
+                        error_check_flag = True
+                        self.error_signal.emit(process.stderr.strip(), target_widget)
+                        break
 
                 except subprocess.CalledProcessError as e:
+                    error_check_flag = True
                     self.error_signal.emit(f"Command failed: {str(e)}", target_widget)
-                    continue
+                    break
                 except Exception as e:
+                    error_check_flag = True
                     self.error_signal.emit(f"{str(e)}", target_widget)
-                    continue
+                    break
 
-            if not error_check_flag:
-                output = "\n".join(output_list)
-                self.output_signal.emit(output, target_widget, executed_cnt)
+            if error_check_flag:
+                continue
+
+            output = "\n".join(output_list)
+            self.output_signal.emit(output, target_widget, executed_cnt)
 
         self.finish_output_signal.emit(self._running)
 
@@ -399,5 +363,3 @@ class ctrl_single_op_verify_class(QObject):
             msg_box.setWindowFlags(msg_box.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)  # 항상 위에 표시
 
         answer = msg_box.exec_()  # 대화 상자를 실행하고 사용자의 응답을 반환
-
-
