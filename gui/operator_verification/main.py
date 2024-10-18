@@ -11,20 +11,14 @@ from PyQt5.QtCore import pyqtSignal, QObject
 from PyQt5 import QtWidgets, QtCore, QtGui
 
 from source.single_op_verification.single_op_verifier import ctrl_single_op_verify_class
-from source.__init__ import keyword_ctrl, CheckDir
+from source.__init__ import keyword_ctrl, CheckDir, Version
 
 if getattr(sys, 'frozen', False):
     # PyInstaller로 패키징된 실행 파일일 경우
     BASE_EXE = os.path.dirname(sys.executable)
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-if getattr(sys, 'frozen', False):
-    file_path = os.path.join(BASE_EXE, "version.txt")
-else:
-    file_path = os.path.join(BASE_DIR, "version.txt")
-
-with open(file_path, "r") as file_:
-    Version_ = file_.readline()
 
 logging.basicConfig(level=logging.INFO)
 
@@ -80,7 +74,7 @@ class Single_OPs_Verification_MainWindow(QtWidgets.QMainWindow):
         text_concatenation = ', '.join(element_list)
         self.mainFrame_ui.command_lineedit.setText(text_concatenation)
 
-        self.setWindowTitle(Version_)
+        self.setWindowTitle(Version)
 
     def closeEvent(self, event):
         answer = QtWidgets.QMessageBox.question(self,

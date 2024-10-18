@@ -14,6 +14,8 @@ from langchain_community.document_loaders import DirectoryLoader, UnstructuredMa
 from langchain_text_splitters import MarkdownHeaderTextSplitter
 from langchain_text_splitters import CharacterTextSplitter
 
+Version = "Single OP Verifier ver.0.1.0"
+
 keyword_ctrl = {
     "target_format": [".yaml"],
     "error_keyword": ["error", "Error", "fail", "Fail", "Fault", "fault", "segmentation"],
