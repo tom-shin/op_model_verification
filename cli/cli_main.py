@@ -1,21 +1,24 @@
 import os
 import subprocess
 from datetime import datetime
-import select
+import sys
+
+if getattr(sys, 'frozen', False):    
+    BASE_EXE = os.path.dirname(sys.executable)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-keyword_ctrl = {
-    "target_format": [".yaml"],
-    "error_keyword": ["error", "Error", "fail", "Fail", "Fault", "fault", "segmentation"],
-    "op_exe_cmd": ["enntools init", "enntools conversion"]
-}
-
 # keyword_ctrl = {
-#     "target_format": [".md"],
-#     "error_keyword": ["error", "Error", "fail", "Fail", "Fault", "fault", "segmentation", "converter", "dataset_and_model"],
-#     "op_exe_cmd": ["ls -l"]
+#     "target_format": [".yaml"],
+#     "error_keyword": ["error", "Error", "fail", "Fail", "Fault", "fault", "segmentation"],
+#     "op_exe_cmd": ["enntools init", "enntools conversion"]
 # }
+
+keyword_ctrl = {
+    "target_format": [".md"],
+    "error_keyword": ["error", "Error", "fail", "Fail", "Fault", "fault", "segmentation", "converter", "dataset_and_model"],
+    "op_exe_cmd": ["dir"]
+}
 
 
 class op_ctrl_class:
@@ -69,7 +72,11 @@ class op_ctrl_class:
     def result_format_change_and_save(work_dir, result_output):
         current_date = datetime.now().strftime("%Y%m%d")
         filename = f"{current_date}_{os.path.basename(work_dir)}"
-        dir_path = os.path.join(BASE_DIR, "Result")
+
+        if getattr(sys, 'frozen', False):    
+            dir_path = os.path.join(BASE_EXE, "Result")
+        else:
+            dir_path = os.path.join(BASE_DIR, "Result")
 
         text_filename = filename + ".txt"
         with open(os.path.join(dir_path, text_filename), "w", encoding="utf-8") as f:
@@ -94,7 +101,11 @@ class op_ctrl_class:
 
 
 def main():
-    result_dir = os.path.join(BASE_DIR, "Result")
+    if getattr(sys, 'frozen', False):    
+        result_dir = os.path.join(BASE_EXE, "Result")
+    else:
+        result_dir = os.path.join(BASE_DIR, "Result")
+
     if not os.path.exists(result_dir):
         os.makedirs(result_dir)
 

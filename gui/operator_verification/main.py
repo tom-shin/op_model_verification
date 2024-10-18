@@ -3,6 +3,7 @@ import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 import os
+import sys
 import logging
 import easygui
 
@@ -12,9 +13,16 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from source.single_op_verification.single_op_verifier import ctrl_single_op_verify_class
 from source.__init__ import keyword_ctrl, CheckDir
 
+if getattr(sys, 'frozen', False):
+    # PyInstaller로 패키징된 실행 파일일 경우
+    BASE_EXE = os.path.dirname(sys.executable)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-file_path = os.path.join(BASE_DIR, "version.txt")
+if getattr(sys, 'frozen', False):
+    file_path = os.path.join(BASE_EXE, "version.txt")
+else:
+    file_path = os.path.join(BASE_DIR, "version.txt")
+
 with open(file_path, "r") as file_:
     Version_ = file_.readline()
 
@@ -120,8 +128,11 @@ class Single_OPs_Verification_MainWindow(QtWidgets.QMainWindow):
 
         self.single_op_ctrl = ctrl_single_op_verify_class(parent=self, grand_parent=self.mainFrame_ui)
 
-        CheckDir(os.path.join(BASE_DIR, "Result"))
-
+        if getattr(sys, 'frozen', False):
+            CheckDir(os.path.join(BASE_EXE, "Result"))
+        else:
+            CheckDir(os.path.join(BASE_DIR, "Result"))
+            
         self.mainFrame_ui.logtextbrowser.hide()
 
     def log_browser_ctrl(self):
@@ -160,7 +171,11 @@ class Single_OPs_Verification_MainWindow(QtWidgets.QMainWindow):
         if self.single_op_ctrl is None:
             return
 
-        self.single_op_ctrl.save_analyze_result(basedir=os.path.join(BASE_DIR, "Result"))
+        if getattr(sys, 'frozen', False):
+            self.single_op_ctrl.save_analyze_result(basedir=os.path.join(BASE_EXE, "Result"))
+        else:
+            self.single_op_ctrl.save_analyze_result(basedir=os.path.join(BASE_DIR, "Result"))
+
 
 
 if __name__ == "__main__":
