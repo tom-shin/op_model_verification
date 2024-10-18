@@ -338,6 +338,10 @@ def X_get_markdown_files(source_dir):
 def get_directory_for_verification(base_dir, user_defined_fmt=None):
     data = set()
     for root, dirs, files in os.walk(base_dir):
+
+        if "DATA" in dirs:
+                dirs.remove("DATA")
+                
         for file in files:
             if user_defined_fmt is None:
                 if any(file.endswith(ext) for ext in keyword_ctrl["target_format"]):
