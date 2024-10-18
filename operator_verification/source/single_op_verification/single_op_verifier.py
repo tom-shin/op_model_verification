@@ -69,16 +69,46 @@ class OP_Analyze_Thread(QThread):
                             self.error_signal.emit(process.stderr.strip(), target_widget)
                             break
                     else:
-                        process = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                                   text=True, shell=True)
+                        process = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)                        
 
+                        # 실시간으로 표준 출력과 표준 에러를 읽기
+                        while True:
+                            # stdout에서 한 줄씩 읽음
+                            output_line = process.stdout.readline()
+                            if output_line:
+                                output_list.append(output_line.strip())
+                                print(output_line.strip())  # 여기서 실시간 출력 확인 가능
+                            
+                            # stderr에서 에러를 읽음
+                            error_line = process.stderr.readline()
+                            if error_line:
+                                error_check_flag = True
+                                self.error_signal.emit(error_line.strip(), target_widget)
+                                break  # 에러 발생 시 루프를 중단
+
+                            # 프로세스가 종료되었고 더 이상 출력이 없는지 확인
+                            if process.poll() is not None:
+                                break
+
+                        # 남은 출력이나 에러가 있는지 확인
                         remaining_output, errors = process.communicate()
                         if remaining_output:
                             output_list.append(remaining_output.strip())
+
                         if errors:
                             error_check_flag = True
                             self.error_signal.emit(errors.strip(), target_widget)
-                            break
+
+                        # process = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                        #                            text=True, shell=True)
+
+                        # remaining_output, errors = process.communicate()
+                        # if remaining_output:
+                        #     output_list.append(remaining_output.strip())
+                        # if errors:
+                        #     error_check_flag = True
+                        #     self.error_signal.emit(errors.strip(), target_widget)
+                        #     break
 
                 except subprocess.CalledProcessError as e:
                     self.error_signal.emit(f"Command failed: {str(e)}", target_widget)
