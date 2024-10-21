@@ -32,7 +32,8 @@ else:
 keyword_ctrl = {
     "target_format": [".yaml"],
     "error_keyword": ["error", "Error", "fail", "Fail", "Fault", "fault", "segmentation", "Fault", "ERROR"],
-    "op_exe_cmd": ["enntools init", "enntools conversion"]
+    "op_exe_cmd": ["enntools init", "enntools conversion"],
+    "exclusive_dir": ["DATA"]
 }
 
 
@@ -53,9 +54,9 @@ class op_ctrl_class:
     def open_target_dir(self):
         data = set()
         for root, dirs, files in os.walk(self.base):
-
-            if "DATA" in dirs:
-                dirs.remove("DATA")  # continue ?
+            for exclusive in keyword_ctrl["exclusive_dir"]:
+                if exclusive in dirs:
+                    dirs.remove(exclusive)
 
             for file in files:
                 if any(file.endswith(ext) for ext in keyword_ctrl["target_format"]):

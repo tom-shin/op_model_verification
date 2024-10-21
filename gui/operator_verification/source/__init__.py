@@ -19,7 +19,8 @@ Version = "Single OP Verifier ver.0.1.0 (made by tom.shin)"
 keyword_ctrl = {
     "target_format": [".yaml"],
     "error_keyword": ["error", "Error", "fail", "Fail", "Fault", "fault", "segmentation", "Fault", "ERROR"],
-    "op_exe_cmd": ["enntools init", "enntools conversion"]
+    "op_exe_cmd": ["enntools init", "enntools conversion"],
+    "exclusive_dir": ["DATA"]
 }
 
 
@@ -339,8 +340,9 @@ def get_directory_for_verification(base_dir, user_defined_fmt=None):
     data = set()
     for root, dirs, files in os.walk(base_dir):
 
-        if "DATA" in dirs:
-            dirs.remove("DATA")
+        for exclusive in keyword_ctrl["exclusive_dir"]:
+            if exclusive in dirs:
+                dirs.remove(exclusive)
 
         for file in files:
             if user_defined_fmt is None:
