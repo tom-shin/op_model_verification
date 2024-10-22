@@ -156,7 +156,10 @@ class ctrl_single_op_verify_class(QObject):
 
     def update_all_sub_widget(self):
         user_fmt = [fmt.strip() for fmt in self.grand_parent.targetformat_lineedit.text().split(",")]
-        self.all_test_path = get_directory_for_verification(self.parent.directory, user_defined_fmt=user_fmt)
+        ret = get_directory_for_verification(self.parent.directory, user_defined_fmt=user_fmt)
+
+        # 각 원소에 대해 '/'가 있으면 제거 후, 결과를 j에 저장
+        self.all_test_path = [path.rstrip('/') for path in ret]
 
         if self.parent.mainFrame_ui.popctrl_radioButton.isChecked():
             self.insert_widget_progress = ModalLess_ProgressDialog(message="Loading Scenario")
