@@ -6,6 +6,8 @@ import os
 import subprocess
 from datetime import datetime
 import platform
+import time
+# from tqdm import tqdm
 
 KEYWORD_CTRL = {
     "target_format": [".yaml"],
@@ -67,7 +69,8 @@ class op_ctrl_class:
         self.pass_cnt = []
         self.total_cnt = len(self.target_dirs)
 
-        for cwd in self.target_dirs:
+        # for cnt_s, cwd in tqdm(enumerate(self.target_dirs), total=self.total_cnt, desc="Processing directories"):
+        for cnt_s, cwd in enumerate(self.target_dirs):
             output_list = []
             for cmd in KEYWORD_CTRL["op_exe_cmd"]:
                 try:
@@ -90,22 +93,43 @@ class op_ctrl_class:
                     print(f"[Error] Exception: {str(e)}")
 
             self.result_format_change_and_save(work_dir=cwd, result_output=output_list)
-        
-        print("\n================= Result Summary =================")
-        print(f"total test: {self.total_cnt}")
-        print(f"total pass: {len(self.pass_cnt)}")
-        print(f"total fail: {len(self.fail_cnt)}")
+            print(f"Processing directories: {cnt_s+1}/{self.total_cnt}")
+
+
+    def op_summary(self, elapsed_T=None):
+        current_date = datetime.now().strftime("%Y%m%d")
+        summary_path = os.path.join(BASE_DIR, "Result")       
+
+        summary = [
+            f"\n================= Result Summary [Elapsed time: {elapsed_T}] =================",
+            f"total test: {self.total_cnt}",
+            f"total pass: {len(self.pass_cnt)}",
+            f"total fail: {len(self.fail_cnt)}",
+            f"\n================= Result Pass Item =================",
+            f"\n================= Result Fail Item =================\n"
+        ]
+
+        with open(os.path.join(summary_path, f"Summary_{current_date}.txt"), "w", encoding="utf-8") as f:
+            for line in summary:
+                print(line + "\n")  # Write each line to the file
+                f.write(line + "\n")  # Write each line to the file
+                f.flush()  # Ensure it's written to disk immediately
+
+                if "Pass Item" in line:
+                    for item in self.pass_cnt:
+                        print(item + "\n")  # Write each line to the file
+                        f.write(item + "\n")  # Write each line to the file
+                        f.flush()  # Ensure it's written to disk immediately
+
+                elif "Fail Item" in line:
+                    for item in self.fail_cnt:
+                        print(item + "\n")  # Write each line to the file
+                        f.write(item + "\n")  # Write each line to the file
+                        f.flush()  # Ensure it's written to disk immediately
                 
-        print("\n================= Result Pass Item =================")
-        for item in self.pass_cnt:
-            print(item)
-
-        print("\n================= Result Fail Item =================")
-        for item in self.fail_cnt:
-            print(item)
+                else:
+                    continue
             
-        print("\n")
-
 
     def result_format_change_and_save(self, work_dir, result_output):
         current_date = datetime.now().strftime("%Y%m%d")
@@ -253,6 +277,8 @@ def ansi_to_rtf(ansi_code):
 
 
 def main():
+    start_evaluation_time = time.time()
+
     result_dir = os.path.join(BASE_DIR, "Result")
     if not os.path.exists(result_dir):
         os.makedirs(result_dir)
@@ -260,6 +286,18 @@ def main():
     ctrl = op_ctrl_class(BASE_DIR)
     ctrl.open_target_dir()
     ctrl.op_analyze()
+
+    end_evaluation_time = time.time()
+    elapsed_time = end_evaluation_time - start_evaluation_time
+    days = elapsed_time // (24 * 3600)
+    remaining_secs = elapsed_time % (24 * 3600)
+    hours = remaining_secs // 3600
+    remaining_secs %= 3600
+    minutes = remaining_secs // 60
+    seconds = remaining_secs % 60
+    total_time = f"{int(days)}day {int(hours)}h {int(minutes)}m {int(seconds)}s"
+
+    ctrl.op_summary(elapsed_T=total_time)
 
 
 if __name__ == '__main__':
