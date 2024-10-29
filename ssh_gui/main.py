@@ -83,6 +83,7 @@ class Single_OPs_Verification_MainWindow(QtWidgets.QMainWindow):
         self.mainFrame_ui.portlineEdit.setText(ssh_server_information["port"])
         self.mainFrame_ui.usernamelineEdit.setText(ssh_server_information["username"])
         self.mainFrame_ui.pwdlineEdit.setText(ssh_server_information["password"])
+        self.mainFrame_ui.containerlineEdit.setText(ssh_server_information["container_name"])
 
         self.setWindowTitle(Version)
 
@@ -107,7 +108,8 @@ class Single_OPs_Verification_MainWindow(QtWidgets.QMainWindow):
 
         # 기본 글자 색상 설정
         color_format = cursor.charFormat()
-        color_format.setForeground(QtCore.Qt.red if "><" in text else QtCore.Qt.black)
+
+        color_format.setForeground(QtCore.Qt.red if "><" in text or "error" in text.lower() else QtCore.Qt.black)
 
         cursor.setCharFormat(color_format)
         cursor.insertText(text)
@@ -201,6 +203,7 @@ class Single_OPs_Verification_MainWindow(QtWidgets.QMainWindow):
             return
 
         self.main_single_op_ctrl.open_file(ssh_client=self.ssh_class_instance, BASE_DIR=BASE_DIR)
+        self.ssh_class_instance.set_container_name_f(container=self.mainFrame_ui.containerlineEdit.text().strip())
 
     def start_analyze(self):
         self.main_single_op_ctrl.op_analyze(ssh_client=self.ssh_class_instance)

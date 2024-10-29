@@ -2,16 +2,18 @@ import sys
 import threading
 import time
 import re
+import ast
 
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import QObject, QThread
 
 from .. import *
 from ..ui_designer import main_widget
+from ..ui_designer import fileedit
 
 
 class Load_Target_Dir_Thread(QtCore.QThread):
-    send_scenario_update_ui_sig = QtCore.pyqtSignal(int, str)
+    send_scenario_update_ui_sig = QtCore.pyqtSignal(int, tuple)
     send_finish_scenario_update_ui_sig = QtCore.pyqtSignal()
 
     def __init__(self, file_path, grand_parent):
@@ -83,7 +85,7 @@ class OP_Analyze_Thread(QThread):
                         break
                 else:
                     exe_cmd = f"cd {cwd} && {cmd}"
-                    ret, result, error = self.ssh_client.ssh_cmd_execution(cmd=exe_cmd)
+                    ret, result, error = self.ssh_client.ssh_cmd_execution(cmd=exe_cmd, execute_enntools=True)
 
                     if ret:
                         output_list.append(result)
@@ -130,6 +132,7 @@ class ctrl_single_op_verify_class(QObject):
         self.all_test_path = None
         self.insert_widget_thread = None
         self.insert_widget_progress = None
+        self.dialogs = []  # 열린 팝업을 저장할 리스트
 
         self._ssh = ssh
         self.parent = parent
@@ -164,7 +167,8 @@ class ctrl_single_op_verify_class(QObject):
             return
 
         # 각 원소에 대해 '/'가 있으면 제거 후, 결과를 j에 저장
-        self.all_test_path = [path.rstrip('/') for path in ret]
+        # self.all_test_path = [path.rstrip('/') for path in ret]
+        self.all_test_path = [ast.literal_eval(path) for path in ret]
 
         if len(self.all_test_path) == 0:
             return
@@ -185,6 +189,64 @@ class ctrl_single_op_verify_class(QObject):
 
         self.insert_widget_progress.showModal_less()
 
+    def save_changes(self, full_file, content, dialog):
+        # 원격 서버에 파일 내용 저장
+        cmd = f"echo '{content}' > {full_file}"  # 예시로 echo 명령을 사용
+        result = self.ssh_client.ssh_cmd_execution(cmd=cmd)
+
+        if result[0]:  # 성공적으로 저장 시
+            QtWidgets.QMessageBox.information(dialog, "Success", "File saved successfully.")
+            dialog.close()
+        else:  # 저장 실패 시
+            QtWidgets.QMessageBox.warning(dialog, "Error", "Failed to save file.")
+
+    def on_item_double_clicked(self, item, sub_widget):
+        file_name = item.text()  # 파일 이름
+        path_ = sub_widget.pathlineEdit.text()  # 해당 파일이 존재하는 디렉토리 경로
+
+        full_file = os.path.join(path_, file_name).replace("\\", "/")
+
+        cmd = f"cat {full_file}"  # 파일 내용 가져 오기
+        content = self.ssh_client.ssh_cmd_execution(cmd=cmd)
+
+        use_modal = 0
+        if use_modal == 0:  # 새로운 창이 계속 열리게 됨
+            dialog = QtWidgets.QDialog(None)
+            ui = fileedit.Ui_Dialog()
+            ui.setupUi(dialog)
+            dialog.setWindowTitle(full_file)
+
+            # 시그널 슬롯 연결 람다 사용해서 직접 인자를 넘기자...........
+            ui.fileedit_save.clicked.connect(lambda: self.save_changes(full_file, ui.textEdit.toPlainText(), dialog))
+            ui.fileedit_cancel.clicked.connect(dialog.close)
+
+            ui.textEdit.setPlainText(content[1])
+
+            # 모달리스 다이얼로그로 설정
+            dialog.setWindowModality(QtCore.Qt.NonModal)
+            self.dialogs.append(dialog)
+
+            dialog.show()
+
+        elif use_modal == 1:  # 모달리스인데 창이 열리면 이전 열린 창이 사라지고 새로운 창이 열림
+            self.dialog = QtWidgets.QDialog(None)
+            self.ui = fileedit.Ui_Dialog()
+            self.ui.setupUi(self.dialog)
+
+            # 모달리스 다이얼로그로 설정
+            self.dialog.setWindowModality(QtCore.Qt.NonModal)
+
+            # 다이얼로그 표시
+            self.dialog.show()
+
+        elif use_modal == 2:  # 완전 모달형태로
+            self.dialog = QtWidgets.QDialog()
+            self.ui = fileedit.Ui_Dialog()
+            self.ui.setupUi(self.dialog)
+
+            self.dialog.setWindowModality(QtCore.Qt.ApplicationModal)
+            self.dialog.show()
+
     def insert_widget_progress_status(self, cnt, test_path):
         if self.insert_widget_progress is not None:
             # print(f"{cnt}/{len(self.added_scenario_widgets)}")
@@ -194,10 +256,15 @@ class ctrl_single_op_verify_class(QObject):
             widget_instance = QtWidgets.QWidget()
             widget_ui.setupUi(widget_instance)
 
-            scenario = os.path.basename(test_path)
+            scenario = os.path.basename(test_path[0])
             widget_ui.scenario_checkBox.setText(f"{scenario}")
-            widget_ui.pathlineEdit.setText(f"{test_path}")
+            widget_ui.pathlineEdit.setText(f"{test_path[0]}")
             widget_ui.contexts_textEdit.setMinimumHeight(200)
+            widget_ui.filelistWidget.addItems(test_path[1])
+            # widget_ui.filelistWidget.itemDoubleClicked.connect(self.on_item_double_clicked)
+            widget_ui.filelistWidget.itemDoubleClicked.connect(
+                lambda item: self.on_item_double_clicked(item, widget_ui))
+
             self.parent.mainFrame_ui.formLayout.setWidget(cnt, QtWidgets.QFormLayout.FieldRole,
                                                           widget_instance)
 

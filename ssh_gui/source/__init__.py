@@ -19,7 +19,7 @@ from langchain_community.document_loaders import DirectoryLoader, UnstructuredMa
 from langchain_text_splitters import MarkdownHeaderTextSplitter
 from langchain_text_splitters import CharacterTextSplitter
 
-Version = "Single OP Verifier ver.0.1.0 (made by tom.shin)"
+Version = "Single OP Verifier ver.1.0.0 (made by tom.shin)"
 
 keyword_ctrl = {
     "target_format": [".yaml", ".md"],
@@ -32,7 +32,8 @@ ssh_server_information = {
     "serverip": "1.220.53.154",
     "port": "63522",
     "username": "sam",
-    "password": "Thunder$@88"
+    "password": "Thunder$@88",
+    "container_name": "input your container name"
 }
 
 
@@ -490,7 +491,15 @@ class SSH_Ctrl_Class:
         self.pwd = pwd
 
         self.ssh = None
-        self.initial_path = '/home/sam'
+        self.initial_path = '/'
+
+        self.container_name = None
+
+    def set_container_name_f(self, container):
+        self.container_name = container
+
+    def get_container_name_f(self):
+        return self.container_name
 
     def get_ssh_instance(self):
         return self.ssh
@@ -554,13 +563,20 @@ class SSH_Ctrl_Class:
 
             return True
 
-    def ssh_cmd_execution(self, cmd):
+    def ssh_cmd_execution(self, cmd, execute_enntools=False):
         if self.ssh is None:
             print("SSH Not Connected.")
             return False, None, None
 
         try:
-            stdin, stdout, stderr = self.ssh.exec_command(cmd)
+            # docker container 이름 : docker ps --format "{{.Names}}"
+            if execute_enntools:
+                container_name = self.get_container_name_f()
+                command = f'docker exec -w {container_name} bash -c {cmd}'
+                stdin, stdout, stderr = self.ssh.exec_command(command)
+            else:
+                stdin, stdout, stderr = self.ssh.exec_command(cmd)
+
             stdout.channel.recv_exit_status()  # Wait for the command to complete
             output = stdout.read().decode()
             error = stderr.read().decode()
